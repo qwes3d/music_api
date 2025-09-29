@@ -1,0 +1,302 @@
+### GET /artists - Basic request
+GET {{baseUrl}}/artists
+
+### GET /artists - With filtering and pagination
+GET {{baseUrl}}/artists?genre=Rock&country=United&page=1&limit=5&sortBy=name&sortOrder=asc
+
+### GET /artists - Test pagination limits
+GET {{baseUrl}}/artists?limit=150
+# Should return 400 error - limit exceeds maximum
+
+### GET /artists/:id - Valid ID
+GET {{baseUrl}}/artists/{{artistId}}
+
+### GET /artists/:id - Invalid ID format
+GET {{baseUrl}}/artists/invalid-id-format
+# Should return 400 error
+
+### GET /artists/:id - Non-existent ID
+GET {{baseUrl}}/artists/507f1f77bcf86cd799439011
+# Should return 404 error
+
+### POST /artists - Valid data
+POST {{baseUrl}}/artists
+Content-Type: application/json
+
+{
+  "name": "Led Zeppelin",
+  "genre": "Rock",
+  "country": "United Kingdom",
+  "formed_year": 1968,
+  "members": ["Robert Plant", "Jimmy Page", "John Paul Jones", "John Bonham"],
+  "biography": "English rock band formed in London in 1968.",
+  "website": "https://www.ledzeppelin.com",
+  "social_media": {
+    "twitter": "@ledzeppelin",
+    "instagram": "@ledzeppelin"
+  }
+}
+
+### POST /artists - Missing required fields
+POST {{baseUrl}}/artists
+Content-Type: application/json
+
+{
+  "name": "",
+  "genre": "Rock"
+}
+# Should return 400 validation error
+
+### POST /artists - Invalid formed year
+POST {{baseUrl}}/artists
+Content-Type: application/json
+
+{
+  "name": "Test Artist",
+  "genre": "Rock",
+  "country": "USA",
+  "formed_year": 2050,
+  "members": ["Test Member"]
+}
+# Should return 400 validation error
+
+### POST /artists - Invalid URL
+POST {{baseUrl}}/artists
+Content-Type: application/json
+
+{
+  "name": "Test Artist 2",
+  "genre": "Pop",
+  "country": "USA",
+  "formed_year": 2000,
+  "members": ["Test Member"],
+  "website": "not-a-valid-url"
+}
+# Should return 400 validation error
+
+### POST /artists - Duplicate name
+POST {{baseUrl}}/artists
+Content-Type: application/json
+
+{
+  "name": "Led Zeppelin",
+  "genre": "Rock",
+  "country": "United Kingdom",
+  "formed_year": 1968,
+  "members": ["Robert Plant", "Jimmy Page", "John Paul Jones", "John Bonham"]
+}
+# Should return 409 conflict error if Led Zeppelin already exists
+
+### PUT /artists/:id - Valid update
+PUT {{baseUrl}}/artists/{{artistId}}
+Content-Type: application/json
+
+{
+  "name": "Led Zeppelin",
+  "genre": "Hard Rock",
+  "country": "United Kingdom",
+  "formed_year": 1968,
+  "members": ["Robert Plant", "Jimmy Page", "John Paul Jones", "John Bonham"],
+  "biography": "English rock band formed in London in 1968. Considered one of the most influential rock bands.",
+  "website": "https://www.ledzeppelin.com",
+  "social_media": {
+    "twitter": "@ledzeppelin",
+    "instagram": "@ledzeppelin"
+  }
+}
+
+### PUT /artists/:id - Invalid ID format
+PUT {{baseUrl}}/artists/invalid-id
+Content-Type: application/json
+
+{
+  "name": "Test Artist",
+  "genre": "Rock",
+  "country": "USA",
+  "formed_year": 2000,
+  "members": ["Test Member"]
+}
+# Should return 400 error
+
+### DELETE /artists/:id - Valid deletion
+DELETE {{baseUrl}}/artists/{{artistId}}
+
+### DELETE /artists/:id - Invalid ID format
+DELETE {{baseUrl}}/artists/invalid-id
+# Should return 400 error
+
+### DELETE /artists/:id - Non-existent ID
+DELETE {{baseUrl}}/artists/507f1f77bcf86cd799439011
+# Should return 404 error
+
+### GET /albums - Basic request
+GET {{baseUrl}}/albums
+
+### GET /albums - With filtering and pagination
+GET {{baseUrl}}/albums?genre=Rock&year=1971&page=1&limit=5&sortBy=release_date&sortOrder=desc
+
+### GET /albums - Test pagination limits
+GET {{baseUrl}}/albums?limit=150
+# Should return 400 error - limit exceeds maximum
+
+### GET /albums/:id - Valid ID
+GET {{baseUrl}}/albums/{{albumId}}
+
+### GET /albums/:id - Invalid ID format
+GET {{baseUrl}}/albums/invalid-id-format
+# Should return 400 error
+
+### GET /albums/artist/:artistId - Valid artist ID
+GET {{baseUrl}}/albums/artist/{{artistId}}
+
+### GET /albums/artist/:artistId - Invalid artist ID format
+GET {{baseUrl}}/albums/artist/invalid-id
+# Should return 400 error
+
+### POST /albums - Valid data
+POST {{baseUrl}}/albums
+Content-Type: application/json
+
+{
+  "title": "Led Zeppelin IV",
+  "artist_id": "{{artistId}}",
+  "release_date": "1971-11-08",
+  "genre": "Rock",
+  "track_count": 8,
+  "duration": 42,
+  "record_label": "Atlantic Records",
+  "cover_image_url": "https://example.com/led-zeppelin-iv.jpg"
+}
+
+### POST /albums - Missing required fields
+POST {{baseUrl}}/albums
+Content-Type: application/json
+
+{
+  "title": "",
+  "artist_id": "{{artistId}}"
+}
+# Should return 400 validation error
+
+### POST /albums - Invalid artist ID
+POST {{baseUrl}}/albums
+Content-Type: application/json
+
+{
+  "title": "Test Album",
+  "artist_id": "507f1f77bcf86cd799439011",
+  "release_date": "2020-01-01",
+  "genre": "Rock",
+  "track_count": 10,
+  "duration": 45
+}
+# Should return 400 error - artist not found
+
+### POST /albums - Future release date
+POST {{baseUrl}}/albums
+Content-Type: application/json
+
+{
+  "title": "Future Album",
+  "artist_id": "{{artistId}}",
+  "release_date": "2030-01-01",
+  "genre": "Rock",
+  "track_count": 10,
+  "duration": 45
+}
+# Should return 400 validation error
+
+### POST /albums - Invalid track count
+POST {{baseUrl}}/albums
+Content-Type: application/json
+
+{
+  "title": "Test Album 2",
+  "artist_id": "{{artistId}}",
+  "release_date": "2020-01-01",
+  "genre": "Rock",
+  "track_count": 0,
+  "duration": 45
+}
+# Should return 400 validation error
+
+### POST /albums - Duplicate album for same artist
+POST {{baseUrl}}/albums
+Content-Type: application/json
+
+{
+  "title": "Led Zeppelin IV",
+  "artist_id": "{{artistId}}",
+  "release_date": "1971-11-08",
+  "genre": "Rock",
+  "track_count": 8,
+  "duration": 42
+}
+# Should return 409 conflict error if Led Zeppelin IV already exists for this artist
+
+### PUT /albums/:id - Valid update
+PUT {{baseUrl}}/albums/{{albumId}}
+Content-Type: application/json
+
+{
+  "title": "Led Zeppelin IV (Remastered)",
+  "artist_id": "{{artistId}}",
+  "release_date": "1971-11-08",
+  "genre": "Rock",
+  "track_count": 8,
+  "duration": 42,
+  "record_label": "Atlantic Records",
+  "cover_image_url": "https://example.com/led-zeppelin-iv-remastered.jpg"
+}
+
+### PUT /albums/:id - Invalid ID format
+PUT {{baseUrl}}/albums/invalid-id
+Content-Type: application/json
+
+{
+  "title": "Test Album",
+  "artist_id": "{{artistId}}",
+  "release_date": "2020-01-01",
+  "genre": "Rock",
+  "track_count": 10,
+  "duration": 45
+}
+# Should return 400 error
+
+### DELETE /albums/:id - Valid deletion
+DELETE {{baseUrl}}/albums/{{albumId}}
+
+### DELETE /albums/:id - Invalid ID format
+DELETE {{baseUrl}}/albums/invalid-id
+# Should return 400 error
+
+### DELETE /albums/:id - Non-existent ID
+DELETE {{baseUrl}}/albums/507f1f77bcf86cd799439011
+# Should return 404 error
+
+### GET / - Root endpoint
+GET {{baseUrl}}/
+
+### GET /api-docs - Swagger documentation redirect
+GET {{baseUrl}}/api-docs
+
+### Seed database with sample data
+POST {{baseUrl}}/seed
+
+### GET /auth/login - Authentication info
+GET {{baseUrl}}/auth/login
+
+### GET /auth/profile - User profile
+GET {{baseUrl}}/auth/profile
+
+### Variables
+@baseUrl = http://localhost:3000
+@artistId = replace-with-actual-artist-id-after-creation
+@albumId = replace-with-actual-album-id-after-creation
+
+### Instructions for testing:
+# 1. Start with seeding the database using POST /seed
+# 2. Use the returned artist IDs in subsequent tests
+# 3. Replace {{artistId}} and {{albumId}} variables with actual IDs
+# 4. Test error cases to verify proper error handling
+# 5. Check that Swagger documentation is accessible at /api-docs
