@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { ObjectId } = require('mongodb');
-const db = require('../db/conn');
-const { requireAuth } = require('../middleware/auth');
+import { ObjectId } from 'mongodb';
+import db from '../db/conn.js';
+import { requireAuth } from '../middleware/auth.js';
 
 // Data validation helper functions
 const validateArtist = (artist) => {
@@ -335,4 +335,4 @@ router.delete('/:id', requireAuth, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

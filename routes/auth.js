@@ -1,85 +1,74 @@
-const express = require('express');
+import express from "express";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import db from "../db/conn.js";
+import user from "../models/user.js";
 const router = express.Router();
-const { toggleDemoMode, getDemoMode } = require('../middleware/auth');
+const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
-// GET /auth/login - Show login information
-router.get('/login', (req, res) => {
-  res.json({
-    message: 'OAuth authentication available',
-    googleLogin: '/auth/google',
-    demo: 'Demo mode available - use /auth/toggle-demo to control',
-    demoMode: getDemoMode(),
-    user: req.user || null
-  });
+// POST /auth/register - Create new user
+router.post("/register", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password required" });
+    }
+
+    const database = db.getDb();
+    const existing = await database.collection("users").findOne({ email });
+    if (existing) {
+      return res.status(400).json({ error: "User already exists" });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+    const newUser = {
+      email,
+      password: hashed,
+      createdAt: new Date(),
+    };
+
+    await database.collection("users").insertOne(newUser);
+
+    res.status(201).json({ message: "User registered successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// POST /auth/toggle-demo - Toggle demo mode on/off
-router.post('/toggle-demo', (req, res) => {
-  const { enable } = req.body || {};
-  const newState = toggleDemoMode(enable);
-  
-  res.json({
-    demoMode: newState,
-    message: `Demo mode ${newState ? 'ENABLED' : 'DISABLED'}`,
-    instruction: newState 
-      ? 'Protected routes are now accessible without authentication' 
-      : 'Protected routes now require real authentication (will show 401 errors)'
-  });
+// POST /auth/login - Login user and return JWT
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const database = db.getDb();
+
+    const user = await database.collection("users").findOne({ email });
+    if (!user) return res.status(400).json({ error: "Invalid credentials" });
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) return res.status(400).json({ error: "Invalid credentials" });
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.json({ token });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// GET /auth/demo-mode - Get current demo mode status
-router.get('/demo-mode', (req, res) => {
-  const demoMode = getDemoMode();
-  res.json({
-    demoMode: demoMode,
-    message: `Demo mode is currently ${demoMode ? 'ENABLED' : 'DISABLED'}`
-  });
-});
-
-// GET /auth/google - Start Google OAuth flow
-router.get('/google', (req, res) => {
-  res.json({
-    message: 'Google OAuth would redirect here',
-    note: 'In demo mode - authentication is automatically applied'
-  });
-});
-
-// GET /auth/google/callback - Google OAuth callback
-router.get('/google/callback', (req, res) => {
-  res.json({
-    message: 'OAuth callback received',
-    user: req.user || 'Demo User'
-  });
-});
-
-// GET /auth/profile - Get user profile
-router.get('/profile', (req, res) => {
+// GET /auth/profile - Get user info (needs requireAuth middleware)
+router.get("/profile", (req, res) => {
   if (!req.user) {
-    return res.status(401).json({
-      error: 'Not authenticated',
-      message: 'Please log in first'
-    });
+    return res.status(401).json({ error: "Not authenticated" });
   }
 
   res.json({
+    message: "Profile retrieved successfully",
     user: req.user,
-    authenticated: true
   });
 });
 
-// GET /auth/logout - Logout user
-router.get('/logout', (req, res) => {
-  req.logout((err) => {
-    if (err) {
-      return res.status(500).json({
-        error: 'Logout failed',
-        message: err.message
-      });
-    }
-    res.json({
-      message: 'Logged out successfully'
-    });
-  });
-});
-
-module.exports = router;
+export default router;
